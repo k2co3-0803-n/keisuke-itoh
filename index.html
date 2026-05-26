@@ -3,10 +3,930 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple HTML</title>
+  <title>鬼から逃げろ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      color-scheme: dark;
+      --bg: #17191f;
+      --panel: #232832;
+      --panel-2: #2d3440;
+      --line: #46505d;
+      --text: #f3f5f7;
+      --muted: #aeb8c4;
+      --player: #41d6b3;
+      --oni: #f05d4f;
+      --gold: #f2c14e;
+      --blue: #6bb8ff;
+      --field: #20262d;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .game-shell {
+      min-width: 0;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .metric {
+      min-height: 58px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: clamp(18px, 2.3vw, 26px);
+      line-height: 1;
+    }
+
+    .arena-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--field);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(15, 17, 21, 0.78);
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .dialog {
+      width: min(440px, 100%);
+      border: 1px solid var(--line);
+      background: #222832;
+      border-radius: 8px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.05;
+    }
+
+    .dialog p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 16px;
+      color: #11151a;
+      background: var(--gold);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: var(--panel-2);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    .side {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .side h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+
+    .side p,
+    .side li {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .side ul {
+      margin: 0 0 16px;
+      padding-left: 18px;
+    }
+
+    .mode,
+    .difficulty {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .mode {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .difficulty {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .mode button,
+    .difficulty button {
+      min-height: 36px;
+      padding: 0 8px;
+      color: var(--text);
+      border-color: var(--line);
+      background: var(--panel-2);
+      font-size: 13px;
+    }
+
+    .mode button.active,
+    .difficulty button.active {
+      color: #14171b;
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .touch-pad {
+      display: none;
+      width: 156px;
+      height: 156px;
+      margin: 14px auto 0;
+      grid-template-columns: repeat(3, 48px);
+      grid-template-rows: repeat(3, 48px);
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .touch-pad button {
+      min-height: 48px;
+      width: 48px;
+      padding: 0;
+      color: var(--text);
+      background: var(--panel-2);
+      border-color: var(--line);
+    }
+
+    .touch-pad .up {
+      grid-column: 2;
+    }
+
+    .touch-pad .left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .touch-pad .down {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .touch-pad .right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    @media (max-width: 860px) {
+      body {
+        padding: 12px;
+        align-items: flex-start;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .arena-wrap {
+        min-height: 320px;
+      }
+
+      .touch-pad {
+        display: grid;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .metric {
+        min-height: 52px;
+        padding: 8px;
+      }
+
+      .arena-wrap {
+        aspect-ratio: 4 / 5;
+        min-height: 420px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <p>これはシンプルなHTMLページです。</p>
+  <main class="app" aria-label="鬼から逃げるゲーム">
+    <section class="game-shell">
+      <div class="topbar" aria-live="polite">
+        <div class="metric"><span id="timeLabel">生存時間</span><strong id="time">0.0</strong></div>
+        <div class="metric"><span id="scoreLabel">小判</span><strong id="coins">0</strong></div>
+        <div class="metric"><span id="countLabel">鬼</span><strong id="oniCount">4</strong></div>
+        <div class="metric"><span id="bestLabel">ベスト</span><strong id="best">0.0</strong></div>
+      </div>
+
+      <div class="arena-wrap">
+        <canvas id="game" width="960" height="600" aria-label="ゲーム画面"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="dialog">
+            <h1 id="overlayTitle">鬼から逃げろ</h1>
+            <p id="overlayText">小判を集めながら、複数の鬼に捕まらずできるだけ長く逃げ続けてください。</p>
+            <div class="actions">
+              <button id="startButton" type="button">開始</button>
+              <button class="secondary" id="resetButton" type="button">リセット</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <h2>モード</h2>
+      <div class="mode" role="group" aria-label="モード選択">
+        <button class="active" type="button" data-mode="escape">逃げる</button>
+        <button type="button" data-mode="oni">鬼になる</button>
+      </div>
+
+      <h2>難易度</h2>
+      <div class="difficulty" role="group" aria-label="難易度選択">
+        <button class="active" type="button" data-level="normal">普通</button>
+        <button type="button" data-level="hard">難しい</button>
+        <button type="button" data-level="extreme">激辛</button>
+      </div>
+
+      <h2>操作</h2>
+      <ul>
+        <li>WASD または矢印キーで移動</li>
+        <li>逃げるモードでは小判を集めながら生き残る</li>
+        <li>鬼モードでは逃げる人間を全員捕まえる</li>
+        <li>青い札を取ると短時間加速</li>
+      </ul>
+
+      <div class="touch-pad" aria-label="タッチ操作">
+        <button class="up" type="button" data-dir="up" aria-label="上">↑</button>
+        <button class="left" type="button" data-dir="left" aria-label="左">←</button>
+        <button class="down" type="button" data-dir="down" aria-label="下">↓</button>
+        <button class="right" type="button" data-dir="right" aria-label="右">→</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const timeLabel = document.getElementById("timeLabel");
+    const scoreLabel = document.getElementById("scoreLabel");
+    const countLabel = document.getElementById("countLabel");
+    const bestLabel = document.getElementById("bestLabel");
+    const timeEl = document.getElementById("time");
+    const coinsEl = document.getElementById("coins");
+    const oniCountEl = document.getElementById("oniCount");
+    const bestEl = document.getElementById("best");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const startButton = document.getElementById("startButton");
+    const resetButton = document.getElementById("resetButton");
+    const modeButtons = document.querySelectorAll("[data-mode]");
+    const difficultyButtons = document.querySelectorAll("[data-level]");
+    const touchButtons = document.querySelectorAll("[data-dir]");
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const keys = new Set();
+    const levels = {
+      normal: { label: "普通", oni: 4, oniSpeed: 93, spawn: 7.5, humans: 5, humanSpeed: 156 },
+      hard: { label: "難しい", oni: 6, oniSpeed: 108, spawn: 6, humans: 7, humanSpeed: 166 },
+      extreme: { label: "激辛", oni: 8, oniSpeed: 120, spawn: 4.8, humans: 9, humanSpeed: 178 }
+    };
+
+    let playMode = "escape";
+    let level = "normal";
+    let state = "ready";
+    let lastTime = 0;
+    let bestEscape = Number(localStorage.getItem("oniEscapeBest") || 0);
+    let bestHunter = Number(localStorage.getItem("oniHunterBest") || 0);
+
+    const game = {
+      elapsed: 0,
+      score: 0,
+      speedBoost: 0,
+      spawnTimer: 0,
+      player: { x: W / 2, y: H / 2, r: 13, speed: 214 },
+      oni: [],
+      humans: [],
+      coins: [],
+      boosts: [],
+      walls: []
+    };
+
+    updateLabels();
+
+    function resetGame() {
+      const config = levels[level];
+      game.elapsed = 0;
+      game.score = 0;
+      game.speedBoost = 0;
+      game.spawnTimer = config.spawn;
+      game.player = { x: W / 2, y: H / 2, r: playMode === "oni" ? 15 : 13, speed: playMode === "oni" ? 206 : 214 };
+      game.oni = [];
+      game.humans = [];
+      game.coins = [];
+      game.boosts = [];
+      game.walls = [
+        { x: 170, y: 95, w: 140, h: 28 },
+        { x: 620, y: 120, w: 150, h: 28 },
+        { x: 410, y: 255, w: 150, h: 30 },
+        { x: 120, y: 390, w: 190, h: 30 },
+        { x: 650, y: 408, w: 180, h: 30 }
+      ];
+
+      if (playMode === "escape") {
+        for (let i = 0; i < config.oni; i += 1) {
+          spawnOni(i);
+        }
+
+        for (let i = 0; i < 7; i += 1) {
+          spawnCoin();
+        }
+      } else {
+        for (let i = 0; i < config.humans; i += 1) {
+          spawnHuman(i);
+        }
+      }
+
+      spawnBoost();
+      updateLabels();
+      updateHud();
+      draw();
+    }
+
+    function startGame() {
+      resetGame();
+      state = "playing";
+      overlay.hidden = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      state = "ended";
+      if (playMode === "escape") {
+        bestEscape = Math.max(bestEscape, game.elapsed);
+        localStorage.setItem("oniEscapeBest", String(bestEscape));
+        overlayTitle.textContent = "捕まりました";
+        overlayText.textContent = `${game.elapsed.toFixed(1)}秒逃走、小判${game.score}枚。もう一度挑戦できます。`;
+      } else {
+        bestHunter = Math.max(bestHunter, game.score);
+        localStorage.setItem("oniHunterBest", String(bestHunter));
+        overlayTitle.textContent = game.humans.length === 0 ? "全員捕まえました" : "終了";
+        overlayText.textContent = `${game.elapsed.toFixed(1)}秒で${game.score}人捕まえました。もう一度挑戦できます。`;
+      }
+      startButton.textContent = "もう一度";
+      overlay.hidden = false;
+      updateHud();
+    }
+
+    function loop(now) {
+      if (state !== "playing") return;
+      const dt = Math.min((now - lastTime) / 1000, 0.035);
+      lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      game.elapsed += dt;
+      game.spawnTimer -= dt;
+      game.speedBoost = Math.max(0, game.speedBoost - dt);
+
+      if (playMode === "escape" && game.spawnTimer <= 0) {
+        spawnOni(game.oni.length);
+        game.spawnTimer = Math.max(3.2, levels[level].spawn - game.elapsed * 0.08);
+      }
+
+      movePlayer(dt);
+      if (playMode === "escape") {
+        moveOni(dt);
+      } else {
+        moveHumans(dt);
+      }
+      collectItems();
+
+      if (playMode === "escape" && game.coins.length < 7) spawnCoin();
+      if (game.boosts.length === 0 && Math.random() < dt * 0.22) spawnBoost();
+
+      if (playMode === "escape") {
+        for (const oni of game.oni) {
+          if (distance(game.player, oni) < game.player.r + oni.r - 2) {
+            endGame();
+            return;
+          }
+        }
+      } else {
+        game.humans = game.humans.filter((human) => {
+          const caught = distance(game.player, human) < game.player.r + human.r - 1;
+          if (caught) game.score += 1;
+          return !caught;
+        });
+
+        if (game.humans.length === 0) {
+          endGame();
+          return;
+        }
+      }
+
+      updateHud();
+    }
+
+    function movePlayer(dt) {
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("ArrowLeft") || keys.has("a")) dx -= 1;
+      if (keys.has("ArrowRight") || keys.has("d")) dx += 1;
+      if (keys.has("ArrowUp") || keys.has("w")) dy -= 1;
+      if (keys.has("ArrowDown") || keys.has("s")) dy += 1;
+
+      if (dx === 0 && dy === 0) return;
+
+      const len = Math.hypot(dx, dy);
+      const speed = game.player.speed * (game.speedBoost > 0 ? 1.42 : 1);
+      tryMove(game.player, (dx / len) * speed * dt, (dy / len) * speed * dt);
+    }
+
+    function moveOni(dt) {
+      const growth = 1 + Math.min(game.elapsed / 85, 0.55);
+
+      for (const oni of game.oni) {
+        const toPlayerX = game.player.x - oni.x;
+        const toPlayerY = game.player.y - oni.y;
+        const len = Math.hypot(toPlayerX, toPlayerY) || 1;
+        const avoid = wallAvoidance(oni);
+        const wobble = Math.sin(game.elapsed * 2.1 + oni.seed) * 0.45;
+        const vx = toPlayerX / len + avoid.x * 1.3 + Math.cos(oni.seed) * wobble;
+        const vy = toPlayerY / len + avoid.y * 1.3 + Math.sin(oni.seed) * wobble;
+        const vLen = Math.hypot(vx, vy) || 1;
+        const speed = oni.speed * growth;
+        tryMove(oni, (vx / vLen) * speed * dt, (vy / vLen) * speed * dt);
+      }
+    }
+
+    function moveHumans(dt) {
+      for (const human of game.humans) {
+        const fromOniX = human.x - game.player.x;
+        const fromOniY = human.y - game.player.y;
+        const len = Math.hypot(fromOniX, fromOniY) || 1;
+        const avoid = wallAvoidance(human);
+        const panic = distance(human, game.player) < 250 ? 1 : 0.35;
+        const wanderX = Math.cos(game.elapsed * 1.7 + human.seed);
+        const wanderY = Math.sin(game.elapsed * 1.3 + human.seed);
+        const vx = (fromOniX / len) * panic + avoid.x * 1.4 + wanderX * 0.3;
+        const vy = (fromOniY / len) * panic + avoid.y * 1.4 + wanderY * 0.3;
+        const vLen = Math.hypot(vx, vy) || 1;
+        const speed = human.speed * (panic > 0.5 ? 1.08 : 0.72);
+        tryMove(human, (vx / vLen) * speed * dt, (vy / vLen) * speed * dt);
+      }
+    }
+
+    function tryMove(entity, dx, dy) {
+      entity.x = clamp(entity.x + dx, entity.r, W - entity.r);
+      if (hitsWall(entity)) entity.x = clamp(entity.x - dx, entity.r, W - entity.r);
+
+      entity.y = clamp(entity.y + dy, entity.r, H - entity.r);
+      if (hitsWall(entity)) entity.y = clamp(entity.y - dy, entity.r, H - entity.r);
+    }
+
+    function hitsWall(entity) {
+      return game.walls.some((wall) => circleRect(entity, wall));
+    }
+
+    function collectItems() {
+      game.coins = game.coins.filter((coin) => {
+        if (distance(game.player, coin) < game.player.r + coin.r) {
+          game.score += 1;
+          return false;
+        }
+        return true;
+      });
+
+      game.boosts = game.boosts.filter((boost) => {
+        if (distance(game.player, boost) < game.player.r + boost.r) {
+          game.speedBoost = 4.2;
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function spawnOni(index) {
+      const config = levels[level];
+      const positions = [
+        { x: 46, y: 48 },
+        { x: W - 46, y: 52 },
+        { x: 54, y: H - 50 },
+        { x: W - 52, y: H - 52 }
+      ];
+      const base = positions[index % positions.length];
+      game.oni.push({
+        x: base.x + random(-14, 14),
+        y: base.y + random(-14, 14),
+        r: 14,
+        speed: config.oniSpeed + index * 2.5,
+        seed: Math.random() * Math.PI * 2
+      });
+    }
+
+    function spawnCoin() {
+      game.coins.push(randomOpenPoint(8));
+    }
+
+    function spawnHuman(index) {
+      const point = randomOpenPoint(12);
+      game.humans.push({
+        x: point.x,
+        y: point.y,
+        r: 12,
+        speed: levels[level].humanSpeed + index * 1.8,
+        seed: Math.random() * Math.PI * 2
+      });
+    }
+
+    function spawnBoost() {
+      const point = randomOpenPoint(10);
+      point.timer = 8;
+      game.boosts.push(point);
+    }
+
+    function randomOpenPoint(radius) {
+      for (let i = 0; i < 80; i += 1) {
+        const point = {
+          x: random(38, W - 38),
+          y: random(38, H - 38),
+          r: radius
+        };
+        const awayFromPlayer = distance(point, game.player) > 110;
+        const open = !hitsWall(point);
+        if (awayFromPlayer && open) return point;
+      }
+      return { x: random(38, W - 38), y: random(38, H - 38), r: radius };
+    }
+
+    function wallAvoidance(entity) {
+      let ax = 0;
+      let ay = 0;
+      for (const wall of game.walls) {
+        const closestX = clamp(entity.x, wall.x, wall.x + wall.w);
+        const closestY = clamp(entity.y, wall.y, wall.y + wall.h);
+        const dx = entity.x - closestX;
+        const dy = entity.y - closestY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 46 && dist > 0) {
+          ax += dx / dist;
+          ay += dy / dist;
+        }
+      }
+      return { x: ax, y: ay };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawField();
+      drawItems();
+      drawHumans();
+      drawPlayer();
+      drawOni();
+    }
+
+    function drawField() {
+      ctx.fillStyle = "#20262d";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.045)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+
+      for (const wall of game.walls) {
+        ctx.fillStyle = "#343d49";
+        ctx.strokeStyle = "#607080";
+        roundRect(wall.x, wall.y, wall.w, wall.h, 6);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    function drawItems() {
+      for (const coin of game.coins) {
+        ctx.beginPath();
+        ctx.fillStyle = "#f2c14e";
+        ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#f8df8a";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      for (const boost of game.boosts) {
+        ctx.save();
+        ctx.translate(boost.x, boost.y);
+        ctx.rotate(game.elapsed * 2.4);
+        ctx.fillStyle = "#6bb8ff";
+        ctx.strokeStyle = "#c9e7ff";
+        ctx.lineWidth = 2;
+        roundRect(-10, -10, 20, 20, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawPlayer() {
+      const p = game.player;
+      if (playMode === "oni") {
+        drawOniFace(p.x, p.y, p.r, game.speedBoost > 0);
+      } else {
+        drawHumanFace(p.x, p.y, p.r, game.speedBoost > 0, true);
+      }
+    }
+
+    function drawOni() {
+      for (const oni of game.oni) {
+        drawOniFace(oni.x, oni.y, oni.r, false);
+      }
+    }
+
+    function drawHumans() {
+      for (const human of game.humans) {
+        drawHumanFace(human.x, human.y, human.r, false, false);
+      }
+    }
+
+    function drawHumanFace(x, y, r, boosted, isPlayer) {
+      ctx.beginPath();
+      ctx.fillStyle = boosted ? "#8af5de" : isPlayer ? "#41d6b3" : "#6bb8ff";
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = boosted ? "#d8fff7" : "#c9e7ff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = "#11151a";
+      ctx.beginPath();
+      ctx.arc(x - 4, y - 2, 2, 0, Math.PI * 2);
+      ctx.arc(x + 4, y - 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawOniFace(x, y, r, boosted) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = boosted ? "#ff887c" : "#f05d4f";
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f2c14e";
+      ctx.beginPath();
+      ctx.moveTo(-8, -10);
+      ctx.lineTo(-12, -22);
+      ctx.lineTo(-2, -13);
+      ctx.moveTo(8, -10);
+      ctx.lineTo(12, -22);
+      ctx.lineTo(2, -13);
+      ctx.fill();
+
+      ctx.fillStyle = "#15171b";
+      ctx.beginPath();
+      ctx.arc(-5, -2, 2.4, 0, Math.PI * 2);
+      ctx.arc(5, -2, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#15171b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-6, 6);
+      ctx.lineTo(6, 6);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function updateHud() {
+      timeEl.textContent = game.elapsed.toFixed(1);
+      coinsEl.textContent = String(game.score);
+      oniCountEl.textContent = playMode === "escape" ? String(game.oni.length) : String(game.humans.length);
+      bestEl.textContent = playMode === "escape" ? bestEscape.toFixed(1) : String(bestHunter);
+    }
+
+    function updateLabels() {
+      if (playMode === "escape") {
+        timeLabel.textContent = "生存時間";
+        scoreLabel.textContent = "小判";
+        countLabel.textContent = "鬼";
+        bestLabel.textContent = "ベスト秒";
+        overlayTitle.textContent = "鬼から逃げろ";
+        overlayText.textContent = "小判を集めながら、複数の鬼に捕まらずできるだけ長く逃げ続けてください。";
+      } else {
+        timeLabel.textContent = "経過時間";
+        scoreLabel.textContent = "捕獲";
+        countLabel.textContent = "残り";
+        bestLabel.textContent = "最多捕獲";
+        overlayTitle.textContent = "鬼になって追え";
+        overlayText.textContent = "逃げ回る人間を追いかけ、全員捕まえてください。青い札で加速できます。";
+      }
+    }
+
+    function circleRect(circle, rect) {
+      const nearestX = clamp(circle.x, rect.x, rect.x + rect.w);
+      const nearestY = clamp(circle.y, rect.y, rect.y + rect.h);
+      return Math.hypot(circle.x - nearestX, circle.y - nearestY) < circle.r;
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(key)) {
+        event.preventDefault();
+        keys.add(key);
+      }
+      if (event.key === " " && state !== "playing") {
+        event.preventDefault();
+        startGame();
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+      keys.delete(key);
+    });
+
+    startButton.addEventListener("click", startGame);
+    resetButton.addEventListener("click", () => {
+      state = "ready";
+      resetGame();
+      startButton.textContent = "開始";
+      overlay.hidden = false;
+    });
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        playMode = button.dataset.mode;
+        modeButtons.forEach((item) => item.classList.toggle("active", item === button));
+        state = "ready";
+        startButton.textContent = "開始";
+        resetGame();
+        overlay.hidden = false;
+      });
+    });
+
+    difficultyButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        level = button.dataset.level;
+        difficultyButtons.forEach((item) => item.classList.toggle("active", item === button));
+        if (state !== "playing") {
+          resetGame();
+        }
+      });
+    });
+
+    const dirKey = {
+      up: "ArrowUp",
+      down: "ArrowDown",
+      left: "ArrowLeft",
+      right: "ArrowRight"
+    };
+
+    touchButtons.forEach((button) => {
+      const key = dirKey[button.dataset.dir];
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        keys.add(key);
+      });
+      button.addEventListener("pointerup", () => keys.delete(key));
+      button.addEventListener("pointercancel", () => keys.delete(key));
+      button.addEventListener("pointerleave", () => keys.delete(key));
+    });
+
+    resetGame();
+  </script>
 </body>
 </html>
