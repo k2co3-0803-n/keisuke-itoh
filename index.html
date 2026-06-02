@@ -3,97 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>鬼から逃げろ</title>
+  <title>Mini Tank Story</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     :root {
       color-scheme: dark;
-      --bg: #17191f;
-      --panel: #232832;
-      --panel-2: #2d3440;
-      --line: #46505d;
-      --text: #f3f5f7;
-      --muted: #aeb8c4;
-      --player: #41d6b3;
-      --oni: #f05d4f;
-      --gold: #f2c14e;
-      --blue: #6bb8ff;
-      --field: #20262d;
+      --bg: #17191d;
+      --panel: #22272e;
+      --panel-2: #30363f;
+      --field: #293022;
+      --line: #454d55;
+      --text: #f2f4ef;
+      --muted: #aeb7bc;
+      --gold: #e5b653;
+      --green: #8aae72;
+      --red: #b36b5c;
+      --blue: #68a5c7;
+      --violet: #a57bc3;
     }
-
-    html,
     body {
-      width: 100%;
-      min-height: 100%;
       margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
     }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
     .app {
-      width: min(1120px, 100%);
+      width: min(1080px, 100%);
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 280px;
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 12px;
       align-items: start;
     }
-
-    .game-shell {
-      min-width: 0;
-    }
-
-    .topbar {
+    .hud {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
-
-    .metric {
-      min-height: 58px;
+    .box, .side {
       border: 1px solid var(--line);
-      background: var(--panel);
       border-radius: 8px;
+      background: var(--panel);
+    }
+    .box {
+      min-height: 54px;
       padding: 8px 10px;
     }
-
-    .metric span {
+    .box span {
       display: block;
       color: var(--muted);
       font-size: 12px;
-      line-height: 1.2;
       margin-bottom: 4px;
     }
-
-    .metric strong {
+    .box strong {
       display: block;
-      font-size: clamp(18px, 2.3vw, 26px);
+      font-size: clamp(18px, 2.2vw, 24px);
       line-height: 1;
+      white-space: nowrap;
     }
-
-    .arena-wrap {
+    .stage {
       position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 10;
-      min-height: 360px;
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
       background: var(--field);
+      aspect-ratio: 16 / 10;
+      min-height: 360px;
     }
-
     canvas {
       display: block;
       width: 100%;
@@ -101,113 +82,64 @@
       touch-action: none;
       cursor: crosshair;
     }
-
     .overlay {
       position: absolute;
       inset: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
-      background: rgba(15, 17, 21, 0.78);
+      padding: 20px;
+      background: rgba(14, 16, 18, 0.78);
     }
-
-    .overlay[hidden] {
-      display: none;
-    }
-
+    .overlay[hidden] { display: none; }
     .dialog {
-      width: min(440px, 100%);
-      border: 1px solid var(--line);
-      background: #222832;
-      border-radius: 8px;
+      width: min(470px, 100%);
       padding: 22px;
       text-align: center;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
     }
-
     h1 {
       margin: 0 0 8px;
-      font-size: clamp(28px, 5vw, 44px);
+      font-size: clamp(30px, 6vw, 44px);
       line-height: 1.05;
     }
-
-    .dialog p {
-      margin: 0 0 18px;
+    p, li {
       color: var(--muted);
-      line-height: 1.7;
+      line-height: 1.65;
+      font-size: 14px;
     }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     button {
-      appearance: none;
+      min-height: 42px;
+      padding: 0 14px;
       border: 1px solid transparent;
       border-radius: 8px;
-      min-height: 42px;
-      padding: 0 16px;
-      color: #11151a;
       background: var(--gold);
+      color: #17191d;
       font: inherit;
       font-weight: 700;
       cursor: pointer;
     }
-
-    button.secondary {
-      color: var(--text);
-      border-color: var(--line);
-      background: var(--panel-2);
-    }
-
     button:focus-visible {
       outline: 3px solid var(--blue);
       outline-offset: 2px;
     }
-
     .side {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      border-radius: 8px;
       padding: 14px;
     }
-
     .side h2 {
-      margin: 0 0 10px;
+      margin: 0 0 8px;
       font-size: 17px;
     }
-
-    .side p,
-    .side li {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.65;
+    .side p {
+      margin: 0 0 14px;
     }
-
-    .side ul {
-      margin: 0 0 16px;
-      padding-left: 18px;
-    }
-
-    .mode,
     .difficulty {
       display: grid;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-
-    .mode {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .difficulty {
       grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
     }
-
-    .mode button,
     .difficulty button {
       min-height: 36px;
       padding: 0 8px;
@@ -216,141 +148,114 @@
       background: var(--panel-2);
       font-size: 13px;
     }
-
-    .mode button.active,
     .difficulty button.active {
       color: #14171b;
-      background: var(--blue);
-      border-color: var(--blue);
+      border-color: var(--gold);
+      background: var(--gold);
     }
-
-    .touch-pad {
+    .side ul {
+      margin: 0 0 14px;
+      padding-left: 18px;
+    }
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .legend-item {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .touch {
       display: none;
-      width: 156px;
-      height: 156px;
-      margin: 14px auto 0;
       grid-template-columns: repeat(3, 48px);
       grid-template-rows: repeat(3, 48px);
       gap: 6px;
-      justify-content: center;
+      margin-top: 14px;
     }
-
-    .touch-pad button {
-      min-height: 48px;
-      width: 48px;
+    .touch button {
       padding: 0;
       color: var(--text);
       background: var(--panel-2);
-      border-color: var(--line);
+      border: 1px solid var(--line);
     }
-
-    .touch-pad .up {
-      grid-column: 2;
-    }
-
-    .touch-pad .left {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    .touch-pad .down {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    .touch-pad .right {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
+    .up { grid-column: 2; }
+    .left { grid-column: 1; grid-row: 2; }
+    .down { grid-column: 2; grid-row: 2; }
+    .right { grid-column: 3; grid-row: 2; }
+    .fire { grid-column: 2; grid-row: 3; }
     @media (max-width: 860px) {
-      body {
-        padding: 12px;
-        align-items: flex-start;
-      }
-
-      .app {
-        grid-template-columns: 1fr;
-      }
-
-      .topbar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .arena-wrap {
-        min-height: 320px;
-      }
-
-      .touch-pad {
-        display: grid;
-      }
+      body { place-items: start center; padding: 10px; }
+      .app { grid-template-columns: 1fr; }
+      .hud { grid-template-columns: repeat(3, 1fr); }
+      .touch { display: grid; }
     }
-
     @media (max-width: 520px) {
-      .metric {
-        min-height: 52px;
-        padding: 8px;
-      }
-
-      .arena-wrap {
-        aspect-ratio: 4 / 5;
-        min-height: 420px;
-      }
+      .hud { grid-template-columns: 1fr 1fr; }
+      .stage { aspect-ratio: 4 / 5; min-height: 420px; }
+      .difficulty { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="app" aria-label="鬼から逃げるゲーム">
-    <section class="game-shell">
-      <div class="topbar" aria-live="polite">
-        <div class="metric"><span id="timeLabel">生存時間</span><strong id="time">0.0</strong></div>
-        <div class="metric"><span id="scoreLabel">小判</span><strong id="coins">0</strong></div>
-        <div class="metric"><span id="countLabel">鬼</span><strong id="oniCount">4</strong></div>
-        <div class="metric"><span id="bestLabel">ベスト</span><strong id="best">0.0</strong></div>
+  <main class="app" aria-label="ストーリー付き軽量戦車ゲーム">
+    <section>
+      <div class="hud" aria-live="polite">
+        <div class="box"><span>耐久</span><strong id="hp">100</strong></div>
+        <div class="box"><span>撃破</span><strong id="score">0</strong></div>
+        <div class="box"><span>残り</span><strong id="left">0</strong></div>
+        <div class="box"><span>任務</span><strong id="mission">1/3</strong></div>
+        <div class="box"><span>難易度</span><strong id="difficultyLabel">普通</strong></div>
       </div>
-
-      <div class="arena-wrap">
-        <canvas id="game" width="960" height="600" aria-label="ゲーム画面"></canvas>
+      <div class="stage">
+        <canvas id="game" width="800" height="500" aria-label="ゲーム画面"></canvas>
         <div class="overlay" id="overlay">
           <div class="dialog">
-            <h1 id="overlayTitle">鬼から逃げろ</h1>
-            <p id="overlayText">小判を集めながら、複数の鬼に捕まらずできるだけ長く逃げ続けてください。</p>
-            <div class="actions">
-              <button id="startButton" type="button">開始</button>
-              <button class="secondary" id="resetButton" type="button">リセット</button>
-            </div>
+            <h1 id="title">Mini Tank</h1>
+            <p id="message">難易度を選んで、敵戦車部隊を突破してください。</p>
+            <button id="start" type="button">開始</button>
           </div>
         </div>
       </div>
     </section>
-
     <aside class="side">
-      <h2>モード</h2>
-      <div class="mode" role="group" aria-label="モード選択">
-        <button class="active" type="button" data-mode="escape">逃げる</button>
-        <button type="button" data-mode="oni">鬼になる</button>
-      </div>
-
       <h2>難易度</h2>
       <div class="difficulty" role="group" aria-label="難易度選択">
         <button class="active" type="button" data-level="normal">普通</button>
         <button type="button" data-level="hard">難しい</button>
-        <button type="button" data-level="extreme">激辛</button>
+        <button type="button" data-level="expert">激戦</button>
       </div>
-
+      <h2 id="storyTitle">国境の偵察</h2>
+      <p id="storyText">前線の監視網を抜け、補給路を確保します。</p>
+      <h2>敵タイプ</h2>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:#b36b5c"></span><span>通常: 近づいて射撃</span></div>
+        <div class="legend-item"><span class="swatch" style="background:#68a5c7"></span><span>高速弾: 弾速が速い</span></div>
+        <div class="legend-item"><span class="swatch" style="background:#a57bc3"></span><span>跳弾: 壁や外周で反射</span></div>
+        <div class="legend-item"><span class="swatch" style="background:#d89a58"></span><span>高速機: 足が速い</span></div>
+      </div>
       <h2>操作</h2>
       <ul>
-        <li>WASD または矢印キーで移動</li>
-        <li>逃げるモードでは小判を集めながら生き残る</li>
-        <li>鬼モードでは逃げる人間を全員捕まえる</li>
-        <li>青い札を取ると短時間加速</li>
+        <li>WASD / 矢印キーで移動</li>
+        <li>マウスで照準</li>
+        <li>クリック / Space で射撃</li>
       </ul>
-
-      <div class="touch-pad" aria-label="タッチ操作">
-        <button class="up" type="button" data-dir="up" aria-label="上">↑</button>
-        <button class="left" type="button" data-dir="left" aria-label="左">←</button>
-        <button class="down" type="button" data-dir="down" aria-label="下">↓</button>
-        <button class="right" type="button" data-dir="right" aria-label="右">→</button>
+      <div class="touch" aria-label="タッチ操作">
+        <button class="up" data-key="ArrowUp" aria-label="上">▲</button>
+        <button class="left" data-key="ArrowLeft" aria-label="左">◀</button>
+        <button class="down" data-key="ArrowDown" aria-label="下">▼</button>
+        <button class="right" data-key="ArrowRight" aria-label="右">▶</button>
+        <button class="fire" data-fire aria-label="射撃">●</button>
       </div>
     </aside>
   </main>
@@ -358,476 +263,471 @@
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
-    const timeLabel = document.getElementById("timeLabel");
-    const scoreLabel = document.getElementById("scoreLabel");
-    const countLabel = document.getElementById("countLabel");
-    const bestLabel = document.getElementById("bestLabel");
-    const timeEl = document.getElementById("time");
-    const coinsEl = document.getElementById("coins");
-    const oniCountEl = document.getElementById("oniCount");
-    const bestEl = document.getElementById("best");
+    const hpEl = document.getElementById("hp");
+    const scoreEl = document.getElementById("score");
+    const leftEl = document.getElementById("left");
+    const missionEl = document.getElementById("mission");
+    const difficultyLabelEl = document.getElementById("difficultyLabel");
     const overlay = document.getElementById("overlay");
-    const overlayTitle = document.getElementById("overlayTitle");
-    const overlayText = document.getElementById("overlayText");
-    const startButton = document.getElementById("startButton");
-    const resetButton = document.getElementById("resetButton");
-    const modeButtons = document.querySelectorAll("[data-mode]");
+    const title = document.getElementById("title");
+    const message = document.getElementById("message");
+    const start = document.getElementById("start");
+    const storyTitle = document.getElementById("storyTitle");
+    const storyText = document.getElementById("storyText");
     const difficultyButtons = document.querySelectorAll("[data-level]");
-    const touchButtons = document.querySelectorAll("[data-dir]");
-
     const W = canvas.width;
     const H = canvas.height;
     const keys = new Set();
-    const levels = {
-      normal: { label: "普通", oni: 4, oniSpeed: 93, spawn: 7.5, humans: 5, humanSpeed: 156 },
-      hard: { label: "難しい", oni: 6, oniSpeed: 108, spawn: 6, humans: 7, humanSpeed: 166 },
-      extreme: { label: "激辛", oni: 8, oniSpeed: 120, spawn: 4.8, humans: 9, humanSpeed: 178 }
+
+    const enemyTypes = {
+      standard: { label: "通常", hp: 52, speed: 62, bulletSpeed: 420, damage: 14, reload: 2.2, range: 390, color: "#b36b5c", body: "#9c5c4f", ricochet: 0 },
+      fastShot: { label: "高速弾", hp: 44, speed: 54, bulletSpeed: 620, damage: 13, reload: 2.45, range: 470, color: "#68a5c7", body: "#527f9a", ricochet: 0 },
+      ricochet: { label: "跳弾", hp: 58, speed: 50, bulletSpeed: 390, damage: 12, reload: 2.65, range: 430, color: "#a57bc3", body: "#805f99", ricochet: 2 },
+      sprinter: { label: "高速機", hp: 36, speed: 112, bulletSpeed: 390, damage: 10, reload: 1.9, range: 330, color: "#d89a58", body: "#ad7544", ricochet: 0 }
     };
 
-    let playMode = "escape";
-    let level = "normal";
-    let state = "ready";
-    let lastTime = 0;
-    let bestEscape = Number(localStorage.getItem("oniEscapeBest") || 0);
-    let bestHunter = Number(localStorage.getItem("oniHunterBest") || 0);
-
-    const game = {
-      elapsed: 0,
-      score: 0,
-      speedBoost: 0,
-      spawnTimer: 0,
-      player: { x: W / 2, y: H / 2, r: 13, speed: 214 },
-      oni: [],
-      humans: [],
-      coins: [],
-      boosts: [],
-      walls: []
-    };
-
-    updateLabels();
-
-    function resetGame() {
-      const config = levels[level];
-      game.elapsed = 0;
-      game.score = 0;
-      game.speedBoost = 0;
-      game.spawnTimer = config.spawn;
-      game.player = { x: W / 2, y: H / 2, r: playMode === "oni" ? 15 : 13, speed: playMode === "oni" ? 206 : 214 };
-      game.oni = [];
-      game.humans = [];
-      game.coins = [];
-      game.boosts = [];
-      game.walls = [
-        { x: 170, y: 95, w: 140, h: 28 },
-        { x: 620, y: 120, w: 150, h: 28 },
-        { x: 410, y: 255, w: 150, h: 30 },
-        { x: 120, y: 390, w: 190, h: 30 },
-        { x: 650, y: 408, w: 180, h: 30 }
-      ];
-
-      if (playMode === "escape") {
-        for (let i = 0; i < config.oni; i += 1) {
-          spawnOni(i);
-        }
-
-        for (let i = 0; i < 7; i += 1) {
-          spawnCoin();
-        }
-      } else {
-        for (let i = 0; i < config.humans; i += 1) {
-          spawnHuman(i);
-        }
+    const campaigns = {
+      normal: {
+        label: "普通",
+        playerHp: 110,
+        playerSpeed: 165,
+        story: "国境の偵察",
+        intro: "前線の監視網を抜け、補給路を確保します。",
+        win: "補給路を確保しました。次の戦線へ進めます。",
+        missions: [
+          { title: "監視所突破", text: "通常型を排除して進路を開きます。", enemies: ["standard", "standard", "standard"] },
+          { title: "高速弾の奇襲", text: "弾速の速い砲兵が合流しました。距離を取りながら撃破します。", enemies: ["standard", "fastShot", "standard", "fastShot"] },
+          { title: "反射砲台の制圧", text: "跳弾を使う守備隊を倒し、補給路を守り切ります。", enemies: ["standard", "fastShot", "ricochet", "standard"] }
+        ]
+      },
+      hard: {
+        label: "難しい",
+        playerHp: 100,
+        playerSpeed: 160,
+        story: "市街地奪還",
+        intro: "反射弾が飛び交う市街地で、敵の機動部隊を押し返します。",
+        win: "市街地の敵部隊を撤退させました。",
+        missions: [
+          { title: "路地の砲撃", text: "跳弾が遮蔽物で反射します。射線を切って戦います。", enemies: ["ricochet", "standard", "fastShot", "standard"] },
+          { title: "機動隊接近", text: "足の速い敵が一気に距離を詰めます。接近前に削ります。", enemies: ["sprinter", "sprinter", "fastShot", "standard", "ricochet"] },
+          { title: "中央広場防衛", text: "全タイプ混成の部隊を倒して広場を守ります。", enemies: ["standard", "fastShot", "ricochet", "sprinter", "fastShot", "standard"] }
+        ]
+      },
+      expert: {
+        label: "激戦",
+        playerHp: 92,
+        playerSpeed: 156,
+        story: "最終防衛線",
+        intro: "高速機と跳弾砲兵が同時に迫る最終防衛線です。",
+        win: "最終防衛線を突破しました。",
+        missions: [
+          { title: "突破口", text: "高速機の突撃をさばき、突破口を作ります。", enemies: ["sprinter", "sprinter", "fastShot", "ricochet", "standard"] },
+          { title: "反射弾包囲", text: "跳弾持ちが多い包囲網です。外周に追い込まれないよう動きます。", enemies: ["ricochet", "ricochet", "fastShot", "sprinter", "standard", "fastShot"] },
+          { title: "司令部突入", text: "全タイプの精鋭を撃破して司令部を奪取します。", enemies: ["sprinter", "fastShot", "ricochet", "sprinter", "fastShot", "ricochet", "standard"] }
+        ]
       }
+    };
 
-      spawnBoost();
-      updateLabels();
+    const walls = [
+      { x: 156, y: 88, w: 130, h: 28 },
+      { x: 515, y: 106, w: 130, h: 28 },
+      { x: 105, y: 374, w: 165, h: 30 },
+      { x: 580, y: 370, w: 150, h: 30 }
+    ];
+
+    let state = "ready";
+    let level = "normal";
+    let missionIndex = 0;
+    let last = 0;
+    let aim = { x: W / 2, y: H / 2 };
+    let player;
+    let enemies = [];
+    let shots = [];
+    let score = 0;
+    let scoreCheckpoint = 0;
+
+    function newTank(x, y, kind = "player") {
+      const type = enemyTypes[kind];
+      return {
+        x,
+        y,
+        kind,
+        hp: type ? type.hp : campaigns[level].playerHp,
+        maxHp: type ? type.hp : campaigns[level].playerHp,
+        r: type ? 17 : 18,
+        speed: type ? type.speed : campaigns[level].playerSpeed,
+        body: type ? Math.PI / 2 : -Math.PI / 2,
+        turret: type ? Math.PI / 2 : -Math.PI / 2,
+        reload: type ? Math.random() * type.reload : 0,
+        enemy: Boolean(type)
+      };
+    }
+
+    function resetCampaign() {
+      score = 0;
+      scoreCheckpoint = 0;
+      missionIndex = 0;
+      loadMission();
+      state = "ready";
+      start.textContent = "開始";
+      title.textContent = campaigns[level].story;
+      message.textContent = campaigns[level].intro;
+      overlay.hidden = false;
+    }
+
+    function loadMission(keepHp = false) {
+      const campaign = campaigns[level];
+      const mission = campaign.missions[missionIndex];
+      const previousHp = player ? player.hp : campaign.playerHp;
+      player = keepHp && player ? newTank(player.x, player.y) : newTank(W / 2, H / 2);
+      if (keepHp) {
+        player.hp = Math.min(campaign.playerHp, Math.max(38, previousHp + 24));
+      }
+      aim = { x: player.x, y: player.y - 80 };
+      enemies = mission.enemies.map((kind, index) => {
+        const point = spawnPoint(index, mission.enemies.length);
+        return newTank(point.x, point.y, kind);
+      });
+      shots = [];
+      updateStory();
       updateHud();
       draw();
     }
 
-    function startGame() {
-      resetGame();
-      state = "playing";
+    function begin() {
+      if (state === "win") resetCampaign();
+      state = "play";
       overlay.hidden = true;
-      lastTime = performance.now();
+      last = performance.now();
       requestAnimationFrame(loop);
     }
 
-    function endGame() {
-      state = "ended";
-      if (playMode === "escape") {
-        bestEscape = Math.max(bestEscape, game.elapsed);
-        localStorage.setItem("oniEscapeBest", String(bestEscape));
-        overlayTitle.textContent = "捕まりました";
-        overlayText.textContent = `${game.elapsed.toFixed(1)}秒逃走、小判${game.score}枚。もう一度挑戦できます。`;
-      } else {
-        bestHunter = Math.max(bestHunter, game.score);
-        localStorage.setItem("oniHunterBest", String(bestHunter));
-        overlayTitle.textContent = game.humans.length === 0 ? "全員捕まえました" : "終了";
-        overlayText.textContent = `${game.elapsed.toFixed(1)}秒で${game.score}人捕まえました。もう一度挑戦できます。`;
-      }
-      startButton.textContent = "もう一度";
-      overlay.hidden = false;
-      updateHud();
-    }
-
     function loop(now) {
-      if (state !== "playing") return;
-      const dt = Math.min((now - lastTime) / 1000, 0.035);
-      lastTime = now;
+      if (state !== "play") return;
+      const dt = Math.min((now - last) / 1000, 0.033);
+      last = now;
       update(dt);
       draw();
       requestAnimationFrame(loop);
     }
 
     function update(dt) {
-      game.elapsed += dt;
-      game.spawnTimer -= dt;
-      game.speedBoost = Math.max(0, game.speedBoost - dt);
-
-      if (playMode === "escape" && game.spawnTimer <= 0) {
-        spawnOni(game.oni.length);
-        game.spawnTimer = Math.max(3.2, levels[level].spawn - game.elapsed * 0.08);
-      }
-
+      player.reload = Math.max(0, player.reload - dt);
       movePlayer(dt);
-      if (playMode === "escape") {
-        moveOni(dt);
-      } else {
-        moveHumans(dt);
-      }
-      collectItems();
-
-      if (playMode === "escape" && game.coins.length < 7) spawnCoin();
-      if (game.boosts.length === 0 && Math.random() < dt * 0.22) spawnBoost();
-
-      if (playMode === "escape") {
-        for (const oni of game.oni) {
-          if (distance(game.player, oni) < game.player.r + oni.r - 2) {
-            endGame();
-            return;
-          }
-        }
-      } else {
-        game.humans = game.humans.filter((human) => {
-          const caught = distance(game.player, human) < game.player.r + human.r - 1;
-          if (caught) game.score += 1;
-          return !caught;
-        });
-
-        if (game.humans.length === 0) {
-          endGame();
-          return;
-        }
-      }
-
+      moveEnemies(dt);
+      moveShots(dt);
       updateHud();
+
+      if (player.hp <= 0) {
+        score = scoreCheckpoint;
+        loadMission(false);
+        end("敗北", "撃破されました。難易度や間合いを見直して再挑戦できます。", "もう一度", "ready");
+        return;
+      }
+
+      if (enemies.length === 0) {
+        scoreCheckpoint = score;
+        if (missionIndex < campaigns[level].missions.length - 1) {
+          missionIndex += 1;
+          loadMission(true);
+          const mission = campaigns[level].missions[missionIndex];
+          end(mission.title, mission.text, "次の任務", "briefing");
+        } else {
+          end("作戦完了", campaigns[level].win, "最初から", "win");
+        }
+      }
     }
 
     function movePlayer(dt) {
-      let dx = 0;
-      let dy = 0;
+      let dx = 0, dy = 0;
       if (keys.has("ArrowLeft") || keys.has("a")) dx -= 1;
       if (keys.has("ArrowRight") || keys.has("d")) dx += 1;
       if (keys.has("ArrowUp") || keys.has("w")) dy -= 1;
       if (keys.has("ArrowDown") || keys.has("s")) dy += 1;
-
-      if (dx === 0 && dy === 0) return;
-
-      const len = Math.hypot(dx, dy);
-      const speed = game.player.speed * (game.speedBoost > 0 ? 1.42 : 1);
-      tryMove(game.player, (dx / len) * speed * dt, (dy / len) * speed * dt);
-    }
-
-    function moveOni(dt) {
-      const growth = 1 + Math.min(game.elapsed / 85, 0.55);
-
-      for (const oni of game.oni) {
-        const toPlayerX = game.player.x - oni.x;
-        const toPlayerY = game.player.y - oni.y;
-        const len = Math.hypot(toPlayerX, toPlayerY) || 1;
-        const avoid = wallAvoidance(oni);
-        const wobble = Math.sin(game.elapsed * 2.1 + oni.seed) * 0.45;
-        const vx = toPlayerX / len + avoid.x * 1.3 + Math.cos(oni.seed) * wobble;
-        const vy = toPlayerY / len + avoid.y * 1.3 + Math.sin(oni.seed) * wobble;
-        const vLen = Math.hypot(vx, vy) || 1;
-        const speed = oni.speed * growth;
-        tryMove(oni, (vx / vLen) * speed * dt, (vy / vLen) * speed * dt);
+      if (dx || dy) {
+        const n = Math.hypot(dx, dy);
+        moveEntity(player, dx / n * player.speed * dt, dy / n * player.speed * dt);
+        player.body = Math.atan2(dy, dx);
       }
+      player.turret = Math.atan2(aim.y - player.y, aim.x - player.x);
     }
 
-    function moveHumans(dt) {
-      for (const human of game.humans) {
-        const fromOniX = human.x - game.player.x;
-        const fromOniY = human.y - game.player.y;
-        const len = Math.hypot(fromOniX, fromOniY) || 1;
-        const avoid = wallAvoidance(human);
-        const panic = distance(human, game.player) < 250 ? 1 : 0.35;
-        const wanderX = Math.cos(game.elapsed * 1.7 + human.seed);
-        const wanderY = Math.sin(game.elapsed * 1.3 + human.seed);
-        const vx = (fromOniX / len) * panic + avoid.x * 1.4 + wanderX * 0.3;
-        const vy = (fromOniY / len) * panic + avoid.y * 1.4 + wanderY * 0.3;
-        const vLen = Math.hypot(vx, vy) || 1;
-        const speed = human.speed * (panic > 0.5 ? 1.08 : 0.72);
-        tryMove(human, (vx / vLen) * speed * dt, (vy / vLen) * speed * dt);
-      }
-    }
+    function moveEnemies(dt) {
+      for (const e of enemies) {
+        const type = enemyTypes[e.kind];
+        e.reload = Math.max(0, e.reload - dt);
+        const angle = Math.atan2(player.y - e.y, player.x - e.x);
+        const distance = dist(e, player);
+        const desired = e.kind === "sprinter" ? 118 : 170;
+        e.turret = angle;
 
-    function tryMove(entity, dx, dy) {
-      entity.x = clamp(entity.x + dx, entity.r, W - entity.r);
-      if (hitsWall(entity)) entity.x = clamp(entity.x - dx, entity.r, W - entity.r);
-
-      entity.y = clamp(entity.y + dy, entity.r, H - entity.r);
-      if (hitsWall(entity)) entity.y = clamp(entity.y - dy, entity.r, H - entity.r);
-    }
-
-    function hitsWall(entity) {
-      return game.walls.some((wall) => circleRect(entity, wall));
-    }
-
-    function collectItems() {
-      game.coins = game.coins.filter((coin) => {
-        if (distance(game.player, coin) < game.player.r + coin.r) {
-          game.score += 1;
-          return false;
+        if (distance > desired) {
+          const avoid = wallAvoidance(e);
+          const vx = Math.cos(angle) + avoid.x * 1.2;
+          const vy = Math.sin(angle) + avoid.y * 1.2;
+          const n = Math.hypot(vx, vy) || 1;
+          moveEntity(e, vx / n * type.speed * dt, vy / n * type.speed * dt);
+          e.body = Math.atan2(vy, vx);
+        } else if (e.kind === "sprinter" && distance < 72) {
+          moveEntity(e, -Math.cos(angle) * type.speed * 0.55 * dt, -Math.sin(angle) * type.speed * 0.55 * dt);
         }
-        return true;
-      });
 
-      game.boosts = game.boosts.filter((boost) => {
-        if (distance(game.player, boost) < game.player.r + boost.r) {
-          game.speedBoost = 4.2;
-          return false;
-        }
-        return true;
-      });
-    }
-
-    function spawnOni(index) {
-      const config = levels[level];
-      const positions = [
-        { x: 46, y: 48 },
-        { x: W - 46, y: 52 },
-        { x: 54, y: H - 50 },
-        { x: W - 52, y: H - 52 }
-      ];
-      const base = positions[index % positions.length];
-      game.oni.push({
-        x: base.x + random(-14, 14),
-        y: base.y + random(-14, 14),
-        r: 14,
-        speed: config.oniSpeed + index * 2.5,
-        seed: Math.random() * Math.PI * 2
-      });
-    }
-
-    function spawnCoin() {
-      game.coins.push(randomOpenPoint(8));
-    }
-
-    function spawnHuman(index) {
-      const point = randomOpenPoint(12);
-      game.humans.push({
-        x: point.x,
-        y: point.y,
-        r: 12,
-        speed: levels[level].humanSpeed + index * 1.8,
-        seed: Math.random() * Math.PI * 2
-      });
-    }
-
-    function spawnBoost() {
-      const point = randomOpenPoint(10);
-      point.timer = 8;
-      game.boosts.push(point);
-    }
-
-    function randomOpenPoint(radius) {
-      for (let i = 0; i < 80; i += 1) {
-        const point = {
-          x: random(38, W - 38),
-          y: random(38, H - 38),
-          r: radius
-        };
-        const awayFromPlayer = distance(point, game.player) > 110;
-        const open = !hitsWall(point);
-        if (awayFromPlayer && open) return point;
-      }
-      return { x: random(38, W - 38), y: random(38, H - 38), r: radius };
-    }
-
-    function wallAvoidance(entity) {
-      let ax = 0;
-      let ay = 0;
-      for (const wall of game.walls) {
-        const closestX = clamp(entity.x, wall.x, wall.x + wall.w);
-        const closestY = clamp(entity.y, wall.y, wall.y + wall.h);
-        const dx = entity.x - closestX;
-        const dy = entity.y - closestY;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 46 && dist > 0) {
-          ax += dx / dist;
-          ay += dy / dist;
+        if (distance < type.range && e.reload <= 0 && hasLineBias(e, player)) {
+          shoot(e);
+          e.reload = type.reload;
         }
       }
-      return { x: ax, y: ay };
+    }
+
+    function moveShots(dt) {
+      for (const s of shots) {
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.life -= dt;
+        bounceShot(s);
+        if (s.x < -10 || s.x > W + 10 || s.y < -10 || s.y > H + 10 || s.life <= 0) s.dead = true;
+
+        const targets = s.enemy ? [player] : enemies;
+        for (const t of targets) {
+          if (!s.dead && dist(s, t) < t.r + s.r) {
+            t.hp -= s.damage;
+            s.dead = true;
+            if (t.enemy && t.hp <= 0) score += 1;
+          }
+        }
+      }
+      shots = shots.filter((s) => !s.dead);
+      enemies = enemies.filter((e) => e.hp > 0);
+    }
+
+    function shoot(tank) {
+      if (!tank.enemy && tank.reload > 0) return;
+      const type = tank.enemy ? enemyTypes[tank.kind] : null;
+      const speed = type ? type.bulletSpeed : 460;
+      const angle = tank.turret;
+      shots.push({
+        x: tank.x + Math.cos(angle) * 28,
+        y: tank.y + Math.sin(angle) * 28,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: type && tank.kind === "fastShot" ? 4.5 : 4,
+        life: type && tank.kind === "ricochet" ? 2.6 : 1.45,
+        damage: type ? type.damage : 34,
+        enemy: tank.enemy,
+        bounces: type ? type.ricochet : 0,
+        color: type ? type.color : "#e9c15f"
+      });
+      if (!tank.enemy) tank.reload = 0.5;
+    }
+
+    function bounceShot(s) {
+      if (s.bounces <= 0) return;
+      let bounced = false;
+      if (s.x <= s.r || s.x >= W - s.r) {
+        s.vx *= -1;
+        s.x = clamp(s.x, s.r, W - s.r);
+        bounced = true;
+      }
+      if (s.y <= s.r || s.y >= H - s.r) {
+        s.vy *= -1;
+        s.y = clamp(s.y, s.r, H - s.r);
+        bounced = true;
+      }
+      for (const wall of walls) {
+        if (circleRect(s, wall)) {
+          const left = Math.abs(s.x - wall.x);
+          const right = Math.abs(s.x - (wall.x + wall.w));
+          const top = Math.abs(s.y - wall.y);
+          const bottom = Math.abs(s.y - (wall.y + wall.h));
+          const min = Math.min(left, right, top, bottom);
+          if (min === left || min === right) s.vx *= -1;
+          else s.vy *= -1;
+          bounced = true;
+        }
+      }
+      if (bounced) s.bounces -= 1;
+    }
+
+    function end(heading, text, button, nextState) {
+      state = nextState;
+      title.textContent = heading;
+      message.textContent = text;
+      start.textContent = button;
+      overlay.hidden = false;
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      drawField();
-      drawItems();
-      drawHumans();
-      drawPlayer();
-      drawOni();
+      ctx.fillStyle = "#293022";
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,255,255,.06)";
+      for (let x = 0; x <= W; x += 50) line(x, 0, x, H);
+      for (let y = 0; y <= H; y += 50) line(0, y, W, y);
+      drawWalls();
+      drawTank(player);
+      enemies.forEach(drawTank);
+      for (const s of shots) drawShot(s);
+      drawAim();
     }
 
-    function drawField() {
-      ctx.fillStyle = "#20262d";
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.strokeStyle = "rgba(255,255,255,0.045)";
-      ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += 40) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
-      }
-      for (let y = 0; y < H; y += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
-      }
-
-      for (const wall of game.walls) {
-        ctx.fillStyle = "#343d49";
-        ctx.strokeStyle = "#607080";
+    function drawWalls() {
+      for (const wall of walls) {
+        ctx.fillStyle = "#3b453e";
+        ctx.strokeStyle = "#63705f";
         roundRect(wall.x, wall.y, wall.w, wall.h, 6);
         ctx.fill();
         ctx.stroke();
       }
     }
 
-    function drawItems() {
-      for (const coin of game.coins) {
-        ctx.beginPath();
-        ctx.fillStyle = "#f2c14e";
-        ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#f8df8a";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      for (const boost of game.boosts) {
-        ctx.save();
-        ctx.translate(boost.x, boost.y);
-        ctx.rotate(game.elapsed * 2.4);
-        ctx.fillStyle = "#6bb8ff";
-        ctx.strokeStyle = "#c9e7ff";
-        ctx.lineWidth = 2;
-        roundRect(-10, -10, 20, 20, 4);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
-
-    function drawPlayer() {
-      const p = game.player;
-      if (playMode === "oni") {
-        drawOniFace(p.x, p.y, p.r, game.speedBoost > 0);
-      } else {
-        drawHumanFace(p.x, p.y, p.r, game.speedBoost > 0, true);
-      }
-    }
-
-    function drawOni() {
-      for (const oni of game.oni) {
-        drawOniFace(oni.x, oni.y, oni.r, false);
-      }
-    }
-
-    function drawHumans() {
-      for (const human of game.humans) {
-        drawHumanFace(human.x, human.y, human.r, false, false);
-      }
-    }
-
-    function drawHumanFace(x, y, r, boosted, isPlayer) {
-      ctx.beginPath();
-      ctx.fillStyle = boosted ? "#8af5de" : isPlayer ? "#41d6b3" : "#6bb8ff";
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = boosted ? "#d8fff7" : "#c9e7ff";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.fillStyle = "#11151a";
-      ctx.beginPath();
-      ctx.arc(x - 4, y - 2, 2, 0, Math.PI * 2);
-      ctx.arc(x + 4, y - 2, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function drawOniFace(x, y, r, boosted) {
+    function drawTank(t) {
+      const type = t.enemy ? enemyTypes[t.kind] : null;
       ctx.save();
-      ctx.translate(x, y);
-      ctx.fillStyle = boosted ? "#ff887c" : "#f05d4f";
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#f2c14e";
-      ctx.beginPath();
-      ctx.moveTo(-8, -10);
-      ctx.lineTo(-12, -22);
-      ctx.lineTo(-2, -13);
-      ctx.moveTo(8, -10);
-      ctx.lineTo(12, -22);
-      ctx.lineTo(2, -13);
-      ctx.fill();
-
-      ctx.fillStyle = "#15171b";
-      ctx.beginPath();
-      ctx.arc(-5, -2, 2.4, 0, Math.PI * 2);
-      ctx.arc(5, -2, 2.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "#15171b";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-6, 6);
-      ctx.lineTo(6, 6);
-      ctx.stroke();
+      ctx.translate(t.x, t.y);
+      ctx.rotate(t.body);
+      ctx.fillStyle = type ? type.body : "#779763";
+      ctx.fillRect(-20, -14, 40, 28);
+      ctx.fillStyle = "#252a24";
+      ctx.fillRect(-22, -16, 8, 32);
+      ctx.fillRect(14, -16, 8, 32);
       ctx.restore();
+
+      ctx.save();
+      ctx.translate(t.x, t.y);
+      ctx.rotate(t.turret);
+      ctx.fillStyle = type ? type.color : "#8aae72";
+      ctx.fillRect(-10, -9, 22, 18);
+      ctx.fillStyle = "#17191d";
+      ctx.fillRect(8, -3, 28, 6);
+      if (t.kind === "fastShot") {
+        ctx.fillStyle = "#cfe8f3";
+        ctx.fillRect(28, -2, 8, 4);
+      }
+      if (t.kind === "ricochet") {
+        ctx.strokeStyle = "#e5d7f0";
+        ctx.strokeRect(-7, -6, 14, 12);
+      }
+      ctx.restore();
+
+      if (t.kind === "sprinter") {
+        ctx.strokeStyle = "#f2c784";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, 24, -0.6, 0.6);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#111";
+      ctx.fillRect(t.x - 20, t.y - 28, 40, 5);
+      ctx.fillStyle = t.hp > t.maxHp * 0.35 ? "#8bc36f" : "#d86a5b";
+      ctx.fillRect(t.x - 20, t.y - 28, 40 * clamp(t.hp / t.maxHp, 0, 1), 5);
+    }
+
+    function drawShot(s) {
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+      if (s.bounces > 0) {
+        ctx.strokeStyle = "#efe2ff";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawAim() {
+      ctx.strokeStyle = "#f0d987";
+      ctx.beginPath();
+      ctx.arc(aim.x, aim.y, 12, 0, Math.PI * 2);
+      ctx.moveTo(aim.x - 18, aim.y);
+      ctx.lineTo(aim.x + 18, aim.y);
+      ctx.moveTo(aim.x, aim.y - 18);
+      ctx.lineTo(aim.x, aim.y + 18);
+      ctx.stroke();
     }
 
     function updateHud() {
-      timeEl.textContent = game.elapsed.toFixed(1);
-      coinsEl.textContent = String(game.score);
-      oniCountEl.textContent = playMode === "escape" ? String(game.oni.length) : String(game.humans.length);
-      bestEl.textContent = playMode === "escape" ? bestEscape.toFixed(1) : String(bestHunter);
+      hpEl.textContent = Math.max(0, Math.round(player.hp));
+      scoreEl.textContent = score;
+      leftEl.textContent = enemies.length;
+      missionEl.textContent = `${missionIndex + 1}/${campaigns[level].missions.length}`;
+      difficultyLabelEl.textContent = campaigns[level].label;
     }
 
-    function updateLabels() {
-      if (playMode === "escape") {
-        timeLabel.textContent = "生存時間";
-        scoreLabel.textContent = "小判";
-        countLabel.textContent = "鬼";
-        bestLabel.textContent = "ベスト秒";
-        overlayTitle.textContent = "鬼から逃げろ";
-        overlayText.textContent = "小判を集めながら、複数の鬼に捕まらずできるだけ長く逃げ続けてください。";
-      } else {
-        timeLabel.textContent = "経過時間";
-        scoreLabel.textContent = "捕獲";
-        countLabel.textContent = "残り";
-        bestLabel.textContent = "最多捕獲";
-        overlayTitle.textContent = "鬼になって追え";
-        overlayText.textContent = "逃げ回る人間を追いかけ、全員捕まえてください。青い札で加速できます。";
+    function updateStory() {
+      const campaign = campaigns[level];
+      const mission = campaign.missions[missionIndex];
+      storyTitle.textContent = mission.title;
+      storyText.textContent = mission.text;
+    }
+
+    function spawnPoint(index, total) {
+      const points = [
+        { x: 70, y: 70 },
+        { x: W - 70, y: 80 },
+        { x: 90, y: H - 75 },
+        { x: W - 90, y: H - 85 },
+        { x: W / 2, y: 64 },
+        { x: W / 2, y: H - 64 },
+        { x: 66, y: H / 2 },
+        { x: W - 66, y: H / 2 }
+      ];
+      const p = points[index % points.length];
+      const spread = (index - total / 2) * 6;
+      return { x: p.x + spread, y: p.y - spread };
+    }
+
+    function moveEntity(entity, dx, dy) {
+      entity.x = clamp(entity.x + dx, entity.r, W - entity.r);
+      if (hitsWall(entity)) entity.x = clamp(entity.x - dx, entity.r, W - entity.r);
+      entity.y = clamp(entity.y + dy, entity.r, H - entity.r);
+      if (hitsWall(entity)) entity.y = clamp(entity.y - dy, entity.r, H - entity.r);
+    }
+
+    function hitsWall(entity) {
+      return walls.some((wall) => circleRect(entity, wall));
+    }
+
+    function wallAvoidance(entity) {
+      let ax = 0;
+      let ay = 0;
+      for (const wall of walls) {
+        const closestX = clamp(entity.x, wall.x, wall.x + wall.w);
+        const closestY = clamp(entity.y, wall.y, wall.y + wall.h);
+        const dx = entity.x - closestX;
+        const dy = entity.y - closestY;
+        const d = Math.hypot(dx, dy);
+        if (d < 54 && d > 0) {
+          ax += dx / d;
+          ay += dy / d;
+        }
       }
+      return { x: ax, y: ay };
+    }
+
+    function hasLineBias(from, to) {
+      const blocked = walls.some((wall) => segmentRect(from.x, from.y, to.x, to.y, wall));
+      return !blocked || from.kind === "ricochet" || Math.random() < 0.2;
+    }
+
+    function segmentRect(x1, y1, x2, y2, rect) {
+      return lineIntersectRect(x1, y1, x2, y2, rect.x, rect.y, rect.w, rect.h);
+    }
+
+    function lineIntersectRect(x1, y1, x2, y2, x, y, w, h) {
+      return lineIntersect(x1, y1, x2, y2, x, y, x + w, y)
+        || lineIntersect(x1, y1, x2, y2, x + w, y, x + w, y + h)
+        || lineIntersect(x1, y1, x2, y2, x + w, y + h, x, y + h)
+        || lineIntersect(x1, y1, x2, y2, x, y + h, x, y);
+    }
+
+    function lineIntersect(a, b, c, d, p, q, r, s) {
+      const det = (c - a) * (s - q) - (r - p) * (d - b);
+      if (det === 0) return false;
+      const lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+      const gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+      return lambda > 0 && lambda < 1 && gamma > 0 && gamma < 1;
     }
 
     function circleRect(circle, rect) {
@@ -836,16 +736,19 @@
       return Math.hypot(circle.x - nearestX, circle.y - nearestY) < circle.r;
     }
 
-    function distance(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
+    function pointer(event) {
+      const r = canvas.getBoundingClientRect();
+      aim = {
+        x: (event.clientX - r.left) / r.width * W,
+        y: (event.clientY - r.top) / r.height * H
+      };
     }
 
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    function random(min, max) {
-      return Math.random() * (max - min) + min;
+    function line(x1, y1, x2, y2) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
     }
 
     function roundRect(x, y, w, h, r) {
@@ -861,72 +764,56 @@
       ctx.quadraticCurveTo(x, y, x + r, y);
     }
 
-    window.addEventListener("keydown", (event) => {
-      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    addEventListener("keydown", (e) => {
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(key)) {
-        event.preventDefault();
+        e.preventDefault();
         keys.add(key);
       }
-      if (event.key === " " && state !== "playing") {
-        event.preventDefault();
-        startGame();
+      if (key === " ") {
+        e.preventDefault();
+        state === "play" ? shoot(player) : begin();
       }
     });
-
-    window.addEventListener("keyup", (event) => {
-      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-      keys.delete(key);
+    addEventListener("keyup", (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
+    canvas.addEventListener("pointermove", pointer);
+    canvas.addEventListener("pointerdown", (e) => {
+      pointer(e);
+      if (state === "play") shoot(player);
     });
-
-    startButton.addEventListener("click", startGame);
-    resetButton.addEventListener("click", () => {
-      state = "ready";
-      resetGame();
-      startButton.textContent = "開始";
-      overlay.hidden = false;
-    });
-
-    modeButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        playMode = button.dataset.mode;
-        modeButtons.forEach((item) => item.classList.toggle("active", item === button));
-        state = "ready";
-        startButton.textContent = "開始";
-        resetGame();
-        overlay.hidden = false;
-      });
-    });
-
+    start.addEventListener("click", begin);
     difficultyButtons.forEach((button) => {
       button.addEventListener("click", () => {
         level = button.dataset.level;
         difficultyButtons.forEach((item) => item.classList.toggle("active", item === button));
-        if (state !== "playing") {
-          resetGame();
-        }
+        resetCampaign();
       });
     });
-
-    const dirKey = {
-      up: "ArrowUp",
-      down: "ArrowDown",
-      left: "ArrowLeft",
-      right: "ArrowRight"
-    };
-
-    touchButtons.forEach((button) => {
-      const key = dirKey[button.dataset.dir];
-      button.addEventListener("pointerdown", (event) => {
-        event.preventDefault();
-        button.setPointerCapture(event.pointerId);
+    document.querySelectorAll("[data-key]").forEach((button) => {
+      const key = button.dataset.key;
+      button.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        button.setPointerCapture(e.pointerId);
         keys.add(key);
       });
       button.addEventListener("pointerup", () => keys.delete(key));
       button.addEventListener("pointercancel", () => keys.delete(key));
       button.addEventListener("pointerleave", () => keys.delete(key));
     });
+    document.querySelector("[data-fire]").addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      if (state === "play") shoot(player);
+    });
 
-    resetGame();
+    resetCampaign();
   </script>
 </body>
 </html>
