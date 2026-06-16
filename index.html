@@ -136,7 +136,7 @@
     }
     .difficulty {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 6px;
       margin-bottom: 14px;
     }
@@ -234,6 +234,7 @@
         <button class="active" type="button" data-level="normal">普通</button>
         <button type="button" data-level="hard">難しい</button>
         <button type="button" data-level="expert">激戦</button>
+        <button type="button" data-level="boss">ボス戦</button>
       </div>
       <h2 id="storyTitle">国境の偵察</h2>
       <p id="storyText">前線の監視網を抜け、補給路を確保します。</p>
@@ -243,6 +244,7 @@
         <div class="legend-item"><span class="swatch" style="background:#68a5c7"></span><span>高速弾: 弾速が速い</span></div>
         <div class="legend-item"><span class="swatch" style="background:#a57bc3"></span><span>跳弾: 壁や外周で反射</span></div>
         <div class="legend-item"><span class="swatch" style="background:#d89a58"></span><span>高速機: 足が速い</span></div>
+        <div class="legend-item"><span class="swatch" style="background:#d65b7d"></span><span>ボス: 4ライフ、3種の砲撃</span></div>
       </div>
       <h2>操作</h2>
       <ul>
@@ -283,7 +285,8 @@
       standard: { label: "通常", hp: 52, speed: 62, bulletSpeed: 420, damage: 14, reload: 2.2, range: 390, color: "#b36b5c", body: "#9c5c4f", ricochet: 0 },
       fastShot: { label: "高速弾", hp: 44, speed: 54, bulletSpeed: 620, damage: 13, reload: 2.45, range: 470, color: "#68a5c7", body: "#527f9a", ricochet: 0 },
       ricochet: { label: "跳弾", hp: 58, speed: 50, bulletSpeed: 390, damage: 12, reload: 2.65, range: 430, color: "#a57bc3", body: "#805f99", ricochet: 2 },
-      sprinter: { label: "高速機", hp: 36, speed: 112, bulletSpeed: 390, damage: 10, reload: 1.9, range: 330, color: "#d89a58", body: "#ad7544", ricochet: 0 }
+      sprinter: { label: "高速機", hp: 36, speed: 112, bulletSpeed: 390, damage: 10, reload: 1.9, range: 330, color: "#d89a58", body: "#ad7544", ricochet: 0 },
+      boss: { label: "ボス", hp: 4, speed: 138, bulletSpeed: 500, damage: 15, reload: 1.35, range: 620, color: "#d65b7d", body: "#7f394f", ricochet: 0 }
     };
 
     const campaigns = {
@@ -325,6 +328,17 @@
           { title: "反射弾包囲", text: "跳弾持ちが多い包囲網です。外周に追い込まれないよう動きます。", enemies: ["ricochet", "ricochet", "fastShot", "sprinter", "standard", "fastShot"] },
           { title: "司令部突入", text: "全タイプの精鋭を撃破して司令部を奪取します。", enemies: ["sprinter", "fastShot", "ricochet", "sprinter", "fastShot", "ricochet", "standard"] }
         ]
+      },
+      boss: {
+        label: "ボス戦",
+        playerHp: 110,
+        playerSpeed: 166,
+        story: "単独決戦",
+        intro: "4つのライフを持つ司令戦車と一騎打ちします。",
+        win: "司令戦車を撃破しました。",
+        missions: [
+          { title: "司令戦車", text: "ボスは残り2ライフで強化され、全方位の拡散弾も使います。", enemies: ["boss"] }
+        ]
       }
     };
 
@@ -354,11 +368,13 @@
         kind,
         hp: type ? type.hp : campaigns[level].playerHp,
         maxHp: type ? type.hp : campaigns[level].playerHp,
-        r: type ? 17 : 18,
+        r: type ? (kind === "boss" ? 25 : 17) : 18,
         speed: type ? type.speed : campaigns[level].playerSpeed,
         body: type ? Math.PI / 2 : -Math.PI / 2,
         turret: type ? Math.PI / 2 : -Math.PI / 2,
         reload: type ? Math.random() * type.reload : 0,
+        strafe: Math.random() < 0.5 ? -1 : 1,
+        strafeTimer: 0.8 + Math.random() * 0.8,
         enemy: Boolean(type)
       };
     }
@@ -385,7 +401,7 @@
       }
       aim = { x: player.x, y: player.y - 80 };
       enemies = mission.enemies.map((kind, index) => {
-        const point = spawnPoint(index, mission.enemies.length);
+        const point = kind === "boss" ? { x: W / 2, y: 72 } : spawnPoint(index, mission.enemies.length);
         return newTank(point.x, point.y, kind);
       });
       shots = [];
@@ -461,6 +477,15 @@
         const desired = e.kind === "sprinter" ? 118 : 170;
         e.turret = angle;
 
+        if (e.kind === "boss") {
+          moveBoss(e, angle, distance, dt);
+          if (distance < type.range && e.reload <= 0) {
+            shoot(e);
+            e.reload = bossPhase(e) === 2 ? 0.82 + Math.random() * 0.22 : type.reload + Math.random() * 0.35;
+          }
+          continue;
+        }
+
         if (distance > desired) {
           const avoid = wallAvoidance(e);
           const vx = Math.cos(angle) + avoid.x * 1.2;
@@ -479,6 +504,27 @@
       }
     }
 
+    function moveBoss(e, angle, distance, dt) {
+      const type = enemyTypes.boss;
+      const phase = bossPhase(e);
+      e.strafeTimer -= dt;
+      if (e.strafeTimer <= 0) {
+        e.strafe *= -1;
+        e.strafeTimer = phase === 2 ? 0.28 + Math.random() * 0.55 : 0.55 + Math.random() * 1.1;
+      }
+
+      const avoid = wallAvoidance(e);
+      const targetDistance = phase === 2 ? 190 : 230;
+      const radial = distance > targetDistance ? (phase === 2 ? 0.95 : 0.7) : (phase === 2 ? -0.68 : -0.45);
+      const strafePower = phase === 2 ? 1.85 : 1.25;
+      const speed = type.speed * (phase === 2 ? 1.34 : 1);
+      const vx = Math.cos(angle) * radial + Math.cos(angle + Math.PI / 2) * e.strafe * strafePower + avoid.x * 1.5;
+      const vy = Math.sin(angle) * radial + Math.sin(angle + Math.PI / 2) * e.strafe * strafePower + avoid.y * 1.5;
+      const n = Math.hypot(vx, vy) || 1;
+      moveEntity(e, vx / n * speed * dt, vy / n * speed * dt);
+      e.body = Math.atan2(vy, vx);
+    }
+
     function moveShots(dt) {
       for (const s of shots) {
         s.x += s.vx * dt;
@@ -490,7 +536,7 @@
         const targets = s.enemy ? [player] : enemies;
         for (const t of targets) {
           if (!s.dead && dist(s, t) < t.r + s.r) {
-            t.hp -= s.damage;
+            t.hp -= t.kind === "boss" && !s.enemy ? 1 : s.damage;
             s.dead = true;
             if (t.enemy && t.hp <= 0) score += 1;
           }
@@ -503,21 +549,67 @@
     function shoot(tank) {
       if (!tank.enemy && tank.reload > 0) return;
       const type = tank.enemy ? enemyTypes[tank.kind] : null;
+      if (tank.kind === "boss") {
+        shootBoss(tank);
+        return;
+      }
       const speed = type ? type.bulletSpeed : 460;
       const angle = tank.turret;
+      addShot(tank, angle, speed, {
+        r: type && tank.kind === "fastShot" ? 4.5 : 4,
+        life: type && tank.kind === "ricochet" ? 2.6 : 1.45,
+        damage: type ? type.damage : 34,
+        bounces: type ? type.ricochet : 0,
+        color: type ? type.color : "#e9c15f"
+      });
+      if (!tank.enemy) tank.reload = 0.5;
+    }
+
+    function shootBoss(tank) {
+      const angle = tank.turret;
+      const phase = bossPhase(tank);
+      const pattern = phase === 2 ? Math.floor(Math.random() * 4) : Math.floor(Math.random() * 3);
+      if (pattern === 0) {
+        addShot(tank, angle, phase === 2 ? 500 : 430, { r: 5, life: phase === 2 ? 3.4 : 3.1, damage: 13, bounces: phase === 2 ? 4 : 3, color: "#a57bc3" });
+      } else if (pattern === 1) {
+        const speed = phase === 2 ? 860 : 760;
+        addShot(tank, angle - (phase === 2 ? 0.08 : 0), speed, { r: 4.5, life: 1.25, damage: 16, bounces: 0, color: "#68a5c7" });
+        if (phase === 2) addShot(tank, angle + 0.08, speed, { r: 4.5, life: 1.25, damage: 16, bounces: 0, color: "#68a5c7" });
+      } else if (pattern === 2) {
+        for (const offset of [-0.36, -0.18, 0, 0.18, 0.36]) {
+          addShot(tank, angle + offset, phase === 2 ? 540 : 460, { r: 4, life: phase === 2 ? 1.95 : 1.7, damage: 10, bounces: 0, color: "#d65b7d" });
+        }
+      } else {
+        shootBossRing(tank);
+      }
+    }
+
+    function shootBossRing(tank) {
+      const count = 16;
+      const base = Math.random() * Math.PI * 2;
+      for (let i = 0; i < count; i += 1) {
+        const angle = base + Math.PI * 2 / count * i;
+        addShot(tank, angle, 360, { r: 4, life: 2.35, damage: 9, bounces: 0, color: "#ff8aa7" });
+      }
+    }
+
+    function bossPhase(tank) {
+      return tank.kind === "boss" && tank.hp <= 2 ? 2 : 1;
+    }
+
+    function addShot(tank, angle, speed, options) {
       shots.push({
         x: tank.x + Math.cos(angle) * 28,
         y: tank.y + Math.sin(angle) * 28,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        r: type && tank.kind === "fastShot" ? 4.5 : 4,
-        life: type && tank.kind === "ricochet" ? 2.6 : 1.45,
-        damage: type ? type.damage : 34,
+        r: options.r,
+        life: options.life,
+        damage: options.damage,
         enemy: tank.enemy,
-        bounces: type ? type.ricochet : 0,
-        color: type ? type.color : "#e9c15f"
+        bounces: options.bounces,
+        color: options.color
       });
-      if (!tank.enemy) tank.reload = 0.5;
     }
 
     function handleWallHit(s) {
@@ -563,6 +655,7 @@
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1;
       ctx.fillStyle = "#293022";
       ctx.fillRect(0, 0, W, H);
       ctx.strokeStyle = "rgba(255,255,255,.06)";
@@ -587,23 +680,26 @@
 
     function drawTank(t) {
       const type = t.enemy ? enemyTypes[t.kind] : null;
+      const phase = t.kind === "boss" ? bossPhase(t) : 1;
       ctx.save();
       ctx.translate(t.x, t.y);
       ctx.rotate(t.body);
-      ctx.fillStyle = type ? type.body : "#779763";
-      ctx.fillRect(-20, -14, 40, 28);
+      ctx.fillStyle = t.kind === "boss" && phase === 2 ? "#9e2f4a" : (type ? type.body : "#779763");
+      const bodyW = t.kind === "boss" ? 54 : 40;
+      const bodyH = t.kind === "boss" ? 36 : 28;
+      ctx.fillRect(-bodyW / 2, -bodyH / 2, bodyW, bodyH);
       ctx.fillStyle = "#252a24";
-      ctx.fillRect(-22, -16, 8, 32);
-      ctx.fillRect(14, -16, 8, 32);
+      ctx.fillRect(-bodyW / 2 - 4, -bodyH / 2 - 2, 9, bodyH + 4);
+      ctx.fillRect(bodyW / 2 - 5, -bodyH / 2 - 2, 9, bodyH + 4);
       ctx.restore();
 
       ctx.save();
       ctx.translate(t.x, t.y);
       ctx.rotate(t.turret);
-      ctx.fillStyle = type ? type.color : "#8aae72";
-      ctx.fillRect(-10, -9, 22, 18);
+      ctx.fillStyle = t.kind === "boss" && phase === 2 ? "#ff6f93" : (type ? type.color : "#8aae72");
+      ctx.fillRect(t.kind === "boss" ? -14 : -10, t.kind === "boss" ? -11 : -9, t.kind === "boss" ? 28 : 22, t.kind === "boss" ? 22 : 18);
       ctx.fillStyle = "#17191d";
-      ctx.fillRect(8, -3, 28, 6);
+      ctx.fillRect(8, -3, t.kind === "boss" ? 38 : 28, 6);
       if (t.kind === "fastShot") {
         ctx.fillStyle = "#cfe8f3";
         ctx.fillRect(28, -2, 8, 4);
@@ -612,20 +708,36 @@
         ctx.strokeStyle = "#e5d7f0";
         ctx.strokeRect(-7, -6, 14, 12);
       }
+      if (t.kind === "boss") {
+        ctx.strokeStyle = phase === 2 ? "#ffe0a3" : "#ffd3df";
+        ctx.strokeRect(-10, -7, 20, 14);
+      }
       ctx.restore();
 
-      if (t.kind === "sprinter") {
-        ctx.strokeStyle = "#f2c784";
+      if (t.kind === "sprinter" || t.kind === "boss") {
+        ctx.strokeStyle = t.kind === "boss" ? (phase === 2 ? "#ffd36b" : "#f6a5b9") : "#f2c784";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(t.x, t.y, 24, -0.6, 0.6);
+        ctx.arc(t.x, t.y, t.kind === "boss" ? 32 : 24, -0.6, 0.6);
         ctx.stroke();
+        if (t.kind === "boss" && phase === 2) {
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, 39, Math.PI * 0.15, Math.PI * 1.35);
+          ctx.stroke();
+        }
       }
 
+      const barW = t.kind === "boss" ? 72 : 40;
+      const barX = t.x - barW / 2;
       ctx.fillStyle = "#111";
-      ctx.fillRect(t.x - 20, t.y - 28, 40, 5);
+      ctx.fillRect(barX, t.y - 28, barW, 5);
       ctx.fillStyle = t.hp > t.maxHp * 0.35 ? "#8bc36f" : "#d86a5b";
-      ctx.fillRect(t.x - 20, t.y - 28, 40 * clamp(t.hp / t.maxHp, 0, 1), 5);
+      ctx.fillRect(barX, t.y - 28, barW * clamp(t.hp / t.maxHp, 0, 1), 5);
+      if (t.kind === "boss") {
+        ctx.strokeStyle = "#17191d";
+        ctx.lineWidth = 1;
+        for (let i = 1; i < t.maxHp; i += 1) line(barX + barW / t.maxHp * i, t.y - 28, barX + barW / t.maxHp * i, t.y - 23);
+      }
     }
 
     function drawShot(s) {
@@ -653,9 +765,10 @@
     }
 
     function updateHud() {
+      const boss = enemies.find((enemy) => enemy.kind === "boss");
       hpEl.textContent = Math.max(0, Math.round(player.hp));
       scoreEl.textContent = score;
-      leftEl.textContent = enemies.length;
+      leftEl.textContent = boss ? `${Math.max(0, boss.hp)}/${boss.maxHp}` : enemies.length;
       missionEl.textContent = `${missionIndex + 1}/${campaigns[level].missions.length}`;
       difficultyLabelEl.textContent = campaigns[level].label;
     }
